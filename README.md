@@ -1,6 +1,13 @@
 # Mac Stay Awake
 
-A lightweight native macOS menu bar app that prevents idle system sleep while background tasks are running.
+A lightweight native macOS app that prevents idle system sleep while background tasks are running. It stays available from both the Dock and the menu bar.
+
+## Features
+
+- Prevent idle system sleep with one click.
+- Restore normal sleep behavior at any time.
+- Keep controls available in a standard, minimizable window and the menu bar.
+- Check the current macOS `SleepDisabled` value with a bundled script.
 
 ## Requirements
 
@@ -13,7 +20,7 @@ A lightweight native macOS menu bar app that prevents idle system sleep while ba
 ./script/build_and_run.sh
 ```
 
-The script builds the Swift package, creates `dist/MacStayAwake.app`, and launches it as a menu-bar-only app.
+The script builds the Swift package, creates `dist/MacStayAwake.app`, and launches the app bundle.
 
 ## Usage
 
@@ -23,12 +30,21 @@ The script builds the Swift package, creates `dist/MacStayAwake.app`, and launch
 
 The app always starts in normal mode. It does not change permanent macOS power settings.
 
+## Check system status
+
+```bash
+./script/status.sh
+```
+
+This runs `pmset -g | grep SleepDisabled`. A value of `1` means sleep is disabled; `0` means normal sleep behavior is enabled.
+
 ## Lid-closed limitation
 
 Mac Stay Awake keeps background work running when the screen is locked and the Mac remains open. It does not guarantee that a MacBook continues running after its lid is closed. Lid-closed behavior is controlled by macOS, the hardware, power, and external-display conditions.
 
-## Test
+## Development
 
 ```bash
 swift test
+./script/build_and_run.sh --verify
 ```
