@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controlWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        NSApp.setActivationPolicy(.regular)
 
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.isVisible = true
