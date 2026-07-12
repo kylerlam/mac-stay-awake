@@ -12,10 +12,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "MacStayAwake",
-            linkerSettings: [
-                .linkedFramework("IOKit")
-            ]
+            name: "MacStayAwake"
         ),
         .testTarget(
             name: "MacStayAwakeTests",

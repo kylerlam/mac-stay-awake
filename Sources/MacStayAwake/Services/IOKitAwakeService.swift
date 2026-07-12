@@ -1,46 +1,43 @@
 import Foundation
-import IOKit.pwr_mgt
 
 final class IOKitAwakeService: AwakeService {
-    private var assertionID: IOPMAssertionID?
+    private var active = false
 
     var isActive: Bool {
-        assertionID != nil
+        active
     }
 
     func activate() throws {
-        guard assertionID == nil else { return }
-
-        var newAssertionID = IOPMAssertionID(0)
-        let result = IOPMAssertionCreateWithName(
-            kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
-            IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Mac Stay Awake is keeping background tasks running" as CFString,
-            &newAssertionID
-        )
-
-        guard result == kIOReturnSuccess else {
-            throw AwakeServiceError.assertionCreationFailed(result)
-        }
-
-        assertionID = newAssertionID
+        guard !active else { return }
+        try setDisableSleep(true)
+        active = true
     }
 
     func deactivate() throws {
-        guard let assertionID else { return }
-
-        let result = IOPMAssertionRelease(assertionID)
-        self.assertionID = nil
-
-        guard result == kIOReturnSuccess else {
-            throw AwakeServiceError.assertionReleaseFailed(result)
-        }
+        guard active else { return }
+        try setDisableSleep(false)
+        active = false
     }
 
-    deinit {
-        if let assertionID {
-            IOPMAssertionRelease(assertionID)
+    private func setDisableSleep(_ disabled: Bool) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = [
+            "-e",
+            "do shell script \"/usr/bin/pmset -a disablesleep \(disabled ? 1 : 0)\" with administrator privileges"
+        ]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            throw AwakeServiceError.commandFailed(-1)
+        }
+
+        guard process.terminationStatus == 0 else {
+            throw AwakeServiceError.commandFailed(process.terminationStatus)
         }
     }
 }
-
