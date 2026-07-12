@@ -1,4 +1,4 @@
 interface:
   display_name: "Mac Stay Awake Development"
-  short_description: "Build and verify every Mac Stay Awake change"
-  default_prompt: "Use $mac-stay-awake-development to modify and verify the Mac Stay Awake project."
+  short_description: "Develop, verify, package, and release the macOS app"
+  default_prompt: "Use $mac-stay-awake-development to develop, verify, package, or release Mac Stay Awake."

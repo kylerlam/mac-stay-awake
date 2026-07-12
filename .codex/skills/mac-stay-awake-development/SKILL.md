@@ -1,6 +1,6 @@
 ---
 name: mac-stay-awake-development
-description: Develop, fix, refactor, or configure the Mac Stay Awake SwiftPM macOS app. Use for any change to Swift source, tests, Package.swift, assets, build scripts, app bundle configuration, or project-local Codex files in this repository; always compile after every change without waiting for the user to request it.
+description: Develop, test, package, or release the Mac Stay Awake SwiftPM macOS app. Use for changes to Swift source, tests, Package.swift, assets, build scripts, app bundle configuration, project-local Codex files, DMG packaging, version tags, or GitHub Releases; always compile after changes and verify release artifacts before publishing.
 ---
 
 # Mac Stay Awake Development
@@ -27,6 +27,18 @@ Keep changes narrow and preserve existing behavior outside the request.
 
 6. Do not report completion if compilation fails. Diagnose and fix the failure, then compile again.
 7. In the final response, state which build command ran and whether it succeeded.
+
+## Release workflow
+
+When the user asks to package, publish, release, create a DMG, tag a version, or update a GitHub Release, read and follow [references/release.md](references/release.md) completely.
+
+Use the bundled DMG builder instead of rewriting packaging commands:
+
+```bash
+.codex/skills/mac-stay-awake-development/scripts/build_dmg.sh <version>
+```
+
+Do not publish a release until the canonical build succeeds and the DMG passes image verification plus a real mount-content check.
 
 ## macOS app constraints
 
