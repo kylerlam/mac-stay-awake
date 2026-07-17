@@ -14,7 +14,7 @@ struct MacStayAwakeApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let store = AwakeStore(service: IOKitAwakeService())
+    private let store = AwakeStore(service: PmsetAwakeService())
     private var statusItem: NSStatusItem?
     private var controlWindow: NSWindow?
 
@@ -31,10 +31,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.autosaveName = "MacStayAwakeStatusItem"
         self.statusItem = statusItem
 
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(systemDidWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+
         showControlWindow()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         store.shutDown()
     }
 
@@ -51,10 +59,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @objc private func systemDidWake() {
+        store.refreshStatus()
+    }
+
     private func showControlWindow() {
         if controlWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 320, height: 220),
+                contentRect: NSRect(x: 0, y: 0, width: 360, height: 420),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
@@ -66,6 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             controlWindow = window
         }
 
+        store.refreshStatus()
         NSApp.activate(ignoringOtherApps: true)
         controlWindow?.makeKeyAndOrderFront(nil)
     }
