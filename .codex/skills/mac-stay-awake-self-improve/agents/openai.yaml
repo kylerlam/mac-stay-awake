@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mac Stay Awake Self Improve"
+  short_description: "Guard lid-closed Mac Stay Awake implementation choices"
+  default_prompt: "Use $mac-stay-awake-self-improve to evaluate this Mac Stay Awake change against the verified lid-closed Codex requirement."
