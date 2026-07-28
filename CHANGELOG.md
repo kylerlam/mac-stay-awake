@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1 - 2026-07-28
+
+- Replace the footer quit button with a compact application menu.
+- Add an appearance submenu with the original default interface and a persistent frosted-glass option.
+- Use native macOS behind-window blur, translucent status surfaces, subtle highlights, borders, and shadows for the frosted appearance.
+- Respect the macOS Reduce Transparency accessibility setting with a more opaque fallback.
+
 ## 1.1.0 - 2026-07-17
 
 - Show the verified macOS sleep-prevention state directly in the app.

@@ -73,6 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             window.title = "Mac Stay Awake"
             window.isReleasedWhenClosed = false
+            window.isOpaque = false
+            window.backgroundColor = .clear
             window.contentViewController = NSHostingController(rootView: MenuBarContentView(store: store))
             window.center()
             controlWindow = window
