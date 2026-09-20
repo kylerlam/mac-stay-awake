@@ -4,14 +4,29 @@ import Foundation
 @MainActor
 final class AwakeStore: ObservableObject {
     @Published private(set) var mode: AwakeMode = .normal
-    @Published private(set) var errorMessage: String?
+    @Published private var errorMessageKey: AppText?
     @Published private(set) var isChecking = false
     @Published private(set) var lastCheckedAt: Date?
+    @Published var language: AppLanguage {
+        didSet { defaults.set(language.rawValue, forKey: "appLanguage") }
+    }
 
     private let service: AwakeService
+    private let defaults: UserDefaults
 
-    init(service: AwakeService) {
+    init(service: AwakeService, defaults: UserDefaults = .standard) {
         self.service = service
+        self.defaults = defaults
+        self.language = defaults.string(forKey: "appLanguage")
+            .flatMap(AppLanguage.init(rawValue:)) ?? .simplifiedChinese
+    }
+
+    func text(_ key: AppText) -> String {
+        language.text(key)
+    }
+
+    var errorMessage: String? {
+        errorMessageKey.map { text($0) }
     }
 
     var isAwake: Bool {
@@ -30,39 +45,39 @@ final class AwakeStore: ObservableObject {
     var statusTitle: String {
         switch mode {
         case .normal:
-            return "正常模式"
+            return text(.normalMode)
         case .awake:
-            return "合盖运行模式"
+            return text(.awakeMode)
         case .mismatch(let expectedAwake, _):
-            return expectedAwake ? "合盖运行未生效" : "未能恢复正常模式"
+            return text(expectedAwake ? .awakeNotApplied : .normalNotRestored)
         case .unknown:
-            return "无法确认系统状态"
+            return text(.statusUnknown)
         }
     }
 
     var statusDetail: String {
         switch mode {
         case .normal:
-            return "Mac 会遵循系统休眠设置"
+            return text(.normalDetail)
         case .awake:
-            return "系统实际状态已确认"
+            return text(.awakeDetail)
         case .mismatch(_, let actualAwake):
-            return actualAwake ? "系统仍在阻止休眠" : "系统当前允许休眠"
+            return text(actualAwake ? .stillPreventingSleep : .sleepAllowed)
         case .unknown:
-            return "请重新检测后再决定是否合盖"
+            return text(.unknownDetail)
         }
     }
 
     var actionTitle: String {
         switch mode {
         case .normal:
-            return "开启合盖运行"
+            return text(.enableAwake)
         case .awake:
-            return "恢复正常模式"
+            return text(.restoreNormal)
         case .mismatch(let expectedAwake, _):
-            return expectedAwake ? "重新开启合盖运行" : "重新恢复正常模式"
+            return text(expectedAwake ? .retryAwake : .retryNormal)
         case .unknown:
-            return "重新检测"
+            return text(.refresh)
         }
     }
 
@@ -78,33 +93,35 @@ final class AwakeStore: ObservableObject {
     }
 
     var menuBarAccessibilityLabel: String {
-        "Mac Stay Awake，\(statusTitle)"
+        "Mac Stay Awake, \(statusTitle)"
     }
 
     var protectionStatusTitle: String {
         switch mode {
         case .normal:
-            return "未开启"
+            return text(.disabled)
         case .awake:
-            return "已开启"
+            return text(.enabled)
         case .mismatch(_, let actualAwake):
-            return actualAwake ? "已开启" : "未开启"
+            return text(actualAwake ? .enabled : .disabled)
         case .unknown:
-            return "无法确认"
+            return text(.unconfirmed)
         }
     }
 
     var lastCheckedTitle: String {
-        lastCheckedAt?.formatted(date: .omitted, time: .standard) ?? "尚未检测"
+        lastCheckedAt?.formatted(
+            Date.FormatStyle(date: .omitted, time: .standard).locale(language.locale)
+        ) ?? text(.notChecked)
     }
 
     var secondaryActionTitle: String? {
         guard case .mismatch(_, let actualAwake) = mode else { return nil }
-        return actualAwake ? "保持合盖运行" : "使用正常模式"
+        return text(actualAwake ? .keepAwake : .useNormal)
     }
 
     var refreshActionTitle: String {
-        isChecking ? "正在检测…" : "重新检测"
+        text(isChecking ? .checking : .refresh)
     }
 
     func toggle() {
@@ -132,7 +149,7 @@ final class AwakeStore: ObservableObject {
         guard !isChecking else { return }
 
         let previousMode = mode
-        errorMessage = nil
+        errorMessageKey = nil
         isChecking = true
         defer { isChecking = false }
 
@@ -150,14 +167,14 @@ final class AwakeStore: ObservableObject {
             }
         } catch {
             mode = .unknown
-            errorMessage = "无法读取系统休眠状态，请重新检测。"
+            errorMessageKey = .readStatusFailed
         }
     }
 
     func acceptDetectedStatus() {
         guard case .mismatch(_, let actualAwake) = mode else { return }
         mode = actualAwake ? .awake : .normal
-        errorMessage = nil
+        errorMessageKey = nil
     }
 
     func shutDown() {
@@ -174,7 +191,7 @@ final class AwakeStore: ObservableObject {
     private func apply(expectedAwake: Bool) {
         guard !isChecking else { return }
 
-        errorMessage = nil
+        errorMessageKey = nil
         isChecking = true
         defer { isChecking = false }
 
@@ -204,13 +221,11 @@ final class AwakeStore: ObservableObject {
                 mode = actualAwake ? .awake : .normal
             } else {
                 mode = .mismatch(expectedAwake: expectedAwake, actualAwake: actualAwake)
-                errorMessage = expectedAwake
-                    ? "无法开启合盖运行，请重试。"
-                    : "无法恢复正常模式，请重试。"
+                errorMessageKey = expectedAwake ? .enableFailed : .restoreFailed
             }
         } catch {
             mode = .unknown
-            errorMessage = "无法确认系统状态，请重新检测。"
+            errorMessageKey = .confirmStatusFailed
         }
     }
 }

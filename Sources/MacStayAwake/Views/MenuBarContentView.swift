@@ -25,6 +25,7 @@ struct MenuBarContentView: View {
                     Color(nsColor: .windowBackgroundColor)
                 }
             }
+            .environment(\.locale, store.language.locale)
     }
 
     private var content: some View {
@@ -44,8 +45,8 @@ struct MenuBarContentView: View {
             .controlSize(.large)
             .disabled(store.isChecking)
             .accessibilityHint(store.isAwake
-                ? "允许 Mac 按系统设置休眠"
-                : "开启合盖运行模式")
+                ? store.text(.allowSleepHint)
+                : store.text(.enableAwakeHint))
 
             if let secondaryActionTitle = store.secondaryActionTitle {
                 Button(secondaryActionTitle) {
@@ -68,7 +69,7 @@ struct MenuBarContentView: View {
                 .disabled(store.isChecking)
             }
 
-            Text("每 5 秒自动检测 · 仅窗口打开时")
+            Text(store.text(.autoCheck))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
@@ -91,10 +92,22 @@ struct MenuBarContentView: View {
 
                 Menu {
                     Menu {
-                        appearanceButton("默认", appearance: .standard)
-                        appearanceButton("磨砂玻璃", appearance: .frostedGlass)
+                        appearanceButton(store.text(.standardAppearance), appearance: .standard)
+                        appearanceButton(store.text(.frostedGlass), appearance: .frostedGlass)
                     } label: {
-                        Label("外观", systemImage: "paintbrush")
+                        Label(store.text(.appearance), systemImage: "paintbrush")
+                    }
+
+                    Menu {
+                        Picker(store.text(.switchLanguage), selection: $store.language) {
+                            ForEach(AppLanguage.allCases, id: \.rawValue) { language in
+                                Text(language.nativeName).tag(language)
+                            }
+                        }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                    } label: {
+                        Label(store.text(.switchLanguage), systemImage: "globe")
                     }
 
                     Divider()
@@ -103,7 +116,7 @@ struct MenuBarContentView: View {
                         store.shutDown()
                         NSApplication.shared.terminate(nil)
                     } label: {
-                        Label("退出", systemImage: "power")
+                        Label(store.text(.quit), systemImage: "power")
                     }
                     .keyboardShortcut("q")
                 } label: {
@@ -124,7 +137,7 @@ struct MenuBarContentView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .buttonStyle(.plain)
-                .accessibilityLabel("应用菜单")
+                .accessibilityLabel(store.text(.appMenu))
             }
         }
         .padding(20)
@@ -186,14 +199,14 @@ struct MenuBarContentView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("当前状态")
+        .accessibilityLabel(store.text(.currentStatus))
         .accessibilityValue(store.statusTitle)
     }
 
     private var systemStatusView: some View {
         VStack(spacing: 10) {
             HStack {
-                Text("防止系统休眠")
+                Text(store.text(.preventSystemSleep))
                 Spacer()
                 Text(store.protectionStatusTitle)
                     .fontWeight(.semibold)
@@ -203,7 +216,7 @@ struct MenuBarContentView: View {
             Divider()
 
             HStack {
-                Text("最后检测")
+                Text(store.text(.lastChecked))
                 Spacer()
                 Text(store.lastCheckedTitle)
                     .foregroundStyle(.secondary)
@@ -228,8 +241,8 @@ struct MenuBarContentView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("系统实际状态")
-        .accessibilityValue("防止系统休眠\(store.protectionStatusTitle)，最后检测\(store.lastCheckedTitle)")
+        .accessibilityLabel(store.text(.actualSystemStatus))
+        .accessibilityValue("\(store.text(.preventSystemSleep)): \(store.protectionStatusTitle); \(store.text(.lastChecked)): \(store.lastCheckedTitle)")
     }
 
     private var statusColor: Color {
