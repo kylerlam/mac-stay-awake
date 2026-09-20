@@ -4,9 +4,17 @@ A lightweight native macOS app that disables system sleep while long-running bac
 
 **[Download for macOS](https://github.com/kylerlam/mac-stay-awake/releases/latest)** · macOS 14 or later
 
-![Mac Stay Awake main window showing sleep prevention enabled, the last status check, and buttons to restore normal sleep or refresh the status.](docs/images/main-window.jpg)
+## Appearance
 
-*Actual app screenshot · Chinese interface · Sleep prevention enabled*
+Four appearances in a compact 360 × 420 window. Open the menu in the bottom-right corner and choose **Appearance** to switch themes.
+
+| Default | Aurora Glass |
+| :---: | :---: |
+| ![Default theme with a white interface, black coffee logo, and blue action button.](docs/images/theme-default.jpg) | ![Aurora Glass theme with a translucent cyan and lavender background.](docs/images/theme-aurora-glass.jpg) |
+| **Midnight Blue** | **Warm Sand** |
+| ![Midnight Blue theme with a dark navy interface and white coffee logo.](docs/images/theme-midnight-blue.jpg) | ![Warm Sand theme with a cream background and warm brown accents.](docs/images/theme-warm-sand.jpg) |
+
+*Actual v1.3.0 screenshots · English interface · Sleep prevention enabled*
 
 ## Features
 
@@ -15,6 +23,8 @@ A lightweight native macOS app that disables system sleep while long-running bac
 - Keep controls available in a standard, minimizable window and the menu bar.
 - Show the verified system sleep-prevention status in the app without exposing command-line terminology.
 - Recheck automatically while the window is visible or manually with the refresh button.
+- Switch between Simplified Chinese, Traditional Chinese, and English, with your language preference saved automatically.
+- Choose Default, Aurora Glass, Midnight Blue, or Warm Sand from the Appearance menu.
 
 ## Download and install
 
