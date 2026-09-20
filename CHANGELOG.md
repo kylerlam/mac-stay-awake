@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 - 2026-09-20
+
+- Add persistent language switching for Simplified Chinese, Traditional Chinese, and English, including status messages, errors, menus, and time formatting.
+- Add Aurora Glass, Midnight Blue, and Warm Sand appearances alongside the default theme, with color previews inside the Appearance menu.
+- Replace the app and menu bar icons with a monochrome coffee logo that adapts to light and dark appearances.
+- Restore the compact 360 × 420 window with a smaller horizontal status header, refined spacing, and scrollable overflow for longer messages.
+- Add an app preview, download link, and installation instructions to the README.
+
 ## 1.2.1 - 2026-07-28
 
 - Replace the footer quit button with a compact application menu.
