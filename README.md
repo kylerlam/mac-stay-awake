@@ -2,6 +2,12 @@
 
 A lightweight native macOS app that disables system sleep while long-running background tasks need to stay online. It stays available from both the Dock and the menu bar.
 
+**[Download for macOS](https://github.com/kylerlam/mac-stay-awake/releases/latest)** · macOS 14 or later
+
+![Mac Stay Awake main window showing sleep prevention enabled, the last status check, and buttons to restore normal sleep or refresh the status.](docs/images/main-window.jpg)
+
+*Actual app screenshot · Chinese interface · Sleep prevention enabled*
+
 ## Features
 
 - Enable lid-closed operation with one click using macOS `pmset`.
@@ -10,10 +16,16 @@ A lightweight native macOS app that disables system sleep while long-running bac
 - Show the verified system sleep-prevention status in the app without exposing command-line terminology.
 - Recheck automatically while the window is visible or manually with the refresh button.
 
+## Download and install
+
+1. Download the `.dmg` from the [latest release](https://github.com/kylerlam/mac-stay-awake/releases/latest).
+2. Open the disk image and drag **MacStayAwake.app** into **Applications**.
+3. Launch **Mac Stay Awake**. Open its controls from the Dock or the cup icon in the menu bar.
+
 ## Requirements
 
 - macOS 14 or later
-- Xcode Command Line Tools with Swift 6
+- Xcode Command Line Tools with Swift 6 **only when building from source**; the downloaded app does not require Xcode.
 
 ## Build and run
 
