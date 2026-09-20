@@ -68,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showControlWindow() {
         if controlWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 390, height: 530),
+                contentRect: NSRect(x: 0, y: 0, width: 360, height: 420),
                 styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
@@ -78,7 +78,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.isReleasedWhenClosed = false
             window.isOpaque = false
             window.backgroundColor = .clear
-            window.contentViewController = NSHostingController(rootView: MenuBarContentView(store: store))
+            let controller = NSHostingController(rootView: MenuBarContentView(store: store))
+            // Keep the utility window's size independent of localized or error content.
+            controller.sizingOptions = []
+            window.contentViewController = controller
+            window.setContentSize(NSSize(width: 360, height: 420))
             window.center()
             controlWindow = window
         }

@@ -13,24 +13,31 @@ struct MenuBarContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 22) {
-            statusView
-            systemStatusView
-            actionsView
+        VStack(spacing: 14) {
+            ScrollView {
+                VStack(spacing: 16) {
+                    statusView
+                    systemStatusView
+                    actionsView
 
-            if let errorMessage = store.errorMessage {
-                Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(appearance.warning)
-                    .fixedSize(horizontal: false, vertical: true)
+                    if let errorMessage = store.errorMessage {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(appearance.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
 
             footerView
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 22)
+        .padding(.horizontal, 20)
+        .padding(.top, 18)
         .padding(.bottom, 18)
-        .frame(width: 390)
+        .frame(width: 360)
         .foregroundStyle(appearance.primaryText)
         .background { ThemeBackground(appearance: appearance) }
         .background { ThemeWindowAppearance(appearance: appearance) }
@@ -46,45 +53,38 @@ struct MenuBarContentView: View {
     }
 
     private var statusView: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .stroke(appearance.accent.opacity(0.12), lineWidth: 1)
-                    .frame(width: 90, height: 90)
-                Circle()
-                    .fill(statusColor.opacity(0.08))
-                    .frame(width: 76, height: 76)
-                Group {
-                    if store.isWarning {
-                        Image(systemName: store.menuBarIconName)
-                            .font(.system(size: 32, weight: .regular))
-                            .foregroundStyle(statusColor)
-                    } else {
-                        Image(nsImage: AppLogo.templateImage)
-                            .resizable()
-                            .renderingMode(.template)
-                            .interpolation(.high)
-                            .scaledToFit()
-                            .frame(width: 48, height: 48)
-                            .foregroundStyle((appearance.colorScheme ?? colorScheme) == .dark
-                                ? Color.white : Color(white: 0.14))
-                    }
+        HStack(spacing: 14) {
+            Group {
+                if store.isWarning {
+                    Image(systemName: store.menuBarIconName)
+                        .font(.system(size: 26, weight: .regular))
+                        .foregroundStyle(statusColor)
+                } else {
+                    Image(nsImage: AppLogo.templateImage)
+                        .resizable()
+                        .renderingMode(.template)
+                        .interpolation(.high)
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .foregroundStyle((appearance.colorScheme ?? colorScheme) == .dark
+                            ? Color.white : Color(white: 0.14))
                 }
-                .frame(width: 64, height: 64)
-                .background { ThemeSurface(appearance: appearance, radius: 24) }
             }
+            .frame(width: 56, height: 56)
+            .background { ThemeSurface(appearance: appearance, radius: 18) }
             .accessibilityHidden(true)
 
-            VStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(store.statusTitle)
-                    .font(.system(size: 23, weight: .semibold, design: appearance == .warmSand ? .serif : .rounded))
+                    .font(.system(size: 19, weight: .semibold, design: appearance == .warmSand ? .serif : .rounded))
                     .foregroundStyle(store.isWarning ? statusColor : appearance.primaryText)
                 Text(store.statusDetail)
                     .font(.system(size: 12))
                     .foregroundStyle(appearance.secondaryText)
             }
-            .multilineTextAlignment(.center)
+            .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
@@ -93,7 +93,7 @@ struct MenuBarContentView: View {
     }
 
     private var systemStatusView: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 11) {
             HStack {
                 Label(store.text(.preventSystemSleep), systemImage: "moon.zzz")
                     .foregroundStyle(appearance.secondaryText)
@@ -122,7 +122,7 @@ struct MenuBarContentView: View {
             }
         }
         .font(.system(size: 12))
-        .padding(16)
+        .padding(14)
         .background { ThemeSurface(appearance: appearance) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(store.text(.actualSystemStatus))
@@ -130,7 +130,7 @@ struct MenuBarContentView: View {
     }
 
     private var actionsView: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 9) {
             Button {
                 store.toggle()
             } label: {
@@ -163,7 +163,7 @@ struct MenuBarContentView: View {
     }
 
     private var footerView: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 10) {
             Rectangle().fill(appearance.border).frame(height: 1)
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
