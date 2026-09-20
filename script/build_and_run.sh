@@ -16,17 +16,21 @@ APP_RESOURCES="$APP_CONTENTS/Resources"
 APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 APP_ICON="$ROOT_DIR/Assets/AppIcon.icns"
+APP_ICON_SOURCE="$ROOT_DIR/Assets/AppIcon.png"
+APP_LOGO="$ROOT_DIR/Sources/MacStayAwake/Resources/CoffeeMark.png"
 
 cd "$ROOT_DIR"
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 
 swift build
 BUILD_BINARY="$(swift build --show-bin-path)/$APP_NAME"
+swift "$ROOT_DIR/script/generate_app_icon.swift" "$APP_ICON_SOURCE" "$APP_ICON"
 
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 cp "$APP_ICON" "$APP_RESOURCES/AppIcon.icns"
+cp "$APP_LOGO" "$APP_RESOURCES/CoffeeMark.png"
 chmod +x "$APP_BINARY"
 
 cat >"$INFO_PLIST" <<PLIST

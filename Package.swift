@@ -12,7 +12,8 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "MacStayAwake"
+            name: "MacStayAwake",
+            resources: [.copy("Resources/CoffeeMark.png")]
         ),
         .testTarget(
             name: "MacStayAwakeTests",

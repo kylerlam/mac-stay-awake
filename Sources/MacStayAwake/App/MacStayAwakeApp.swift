@@ -26,7 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.target = self
         statusItem.button?.action = #selector(toggleControlWindow)
         statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        statusItem.button?.title = "☕"
+        statusItem.button?.image = AppLogo.menuBarImage
+        statusItem.button?.imagePosition = .imageOnly
+        statusItem.button?.setAccessibilityLabel("Mac Stay Awake")
         statusItem.button?.toolTip = "Mac Stay Awake"
         statusItem.autosaveName = "MacStayAwakeStatusItem"
         self.statusItem = statusItem

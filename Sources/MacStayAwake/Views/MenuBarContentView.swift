@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MenuBarContentView: View {
     @ObservedObject var store: AwakeStore
+    @Environment(\.colorScheme) private var colorScheme
     @AppStorage("appAppearance") private var appearanceValue = AppAppearance.standard.rawValue
     private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
@@ -53,9 +54,22 @@ struct MenuBarContentView: View {
                 Circle()
                     .fill(statusColor.opacity(0.08))
                     .frame(width: 76, height: 76)
-                Image(systemName: store.menuBarIconName)
-                    .font(.system(size: 32, weight: .regular))
-                    .foregroundStyle(statusColor)
+                Group {
+                    if store.isWarning {
+                        Image(systemName: store.menuBarIconName)
+                            .font(.system(size: 32, weight: .regular))
+                            .foregroundStyle(statusColor)
+                    } else {
+                        Image(nsImage: AppLogo.templateImage)
+                            .resizable()
+                            .renderingMode(.template)
+                            .interpolation(.high)
+                            .scaledToFit()
+                            .frame(width: 48, height: 48)
+                            .foregroundStyle((appearance.colorScheme ?? colorScheme) == .dark
+                                ? Color.white : Color(white: 0.14))
+                    }
+                }
                 .frame(width: 64, height: 64)
                 .background { ThemeSurface(appearance: appearance, radius: 24) }
             }
