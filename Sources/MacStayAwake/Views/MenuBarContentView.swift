@@ -2,149 +2,40 @@ import AppKit
 import Combine
 import SwiftUI
 
-private enum AppAppearance: String {
-    case standard
-    case frostedGlass
-}
-
 struct MenuBarContentView: View {
     @ObservedObject var store: AwakeStore
-    @AppStorage("appAppearance") private var appearance = AppAppearance.standard.rawValue
+    @AppStorage("appAppearance") private var appearanceValue = AppAppearance.standard.rawValue
     private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
-    private var usesFrostedGlass: Bool {
-        appearance == AppAppearance.frostedGlass.rawValue
+    private var appearance: AppAppearance {
+        AppAppearance(rawValue: appearanceValue) ?? .standard
     }
 
     var body: some View {
-        content
-            .background {
-                if usesFrostedGlass {
-                    FrostedGlassBackground()
-                } else {
-                    Color(nsColor: .windowBackgroundColor)
-                }
-            }
-            .environment(\.locale, store.language.locale)
-    }
-
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 22) {
             statusView
-
             systemStatusView
-
-            Button {
-                store.toggle()
-            } label: {
-                Text(store.actionTitle)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(statusColor)
-            .controlSize(.large)
-            .disabled(store.isChecking)
-            .accessibilityHint(store.isAwake
-                ? store.text(.allowSleepHint)
-                : store.text(.enableAwakeHint))
-
-            if let secondaryActionTitle = store.secondaryActionTitle {
-                Button(secondaryActionTitle) {
-                    store.acceptDetectedStatus()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
-            }
-
-            if store.mode != .unknown {
-                Button {
-                    store.refreshStatus()
-                } label: {
-                    Label(store.refreshActionTitle, systemImage: "arrow.clockwise")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(store.isChecking)
-            }
-
-            Text(store.text(.autoCheck))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
+            actionsView
 
             if let errorMessage = store.errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(appearance.warning)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Divider()
-
-            HStack {
-                Text("Mac Stay Awake")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Menu {
-                    Menu {
-                        appearanceButton(store.text(.standardAppearance), appearance: .standard)
-                        appearanceButton(store.text(.frostedGlass), appearance: .frostedGlass)
-                    } label: {
-                        Label(store.text(.appearance), systemImage: "paintbrush")
-                    }
-
-                    Menu {
-                        Picker(store.text(.switchLanguage), selection: $store.language) {
-                            ForEach(AppLanguage.allCases, id: \.rawValue) { language in
-                                Text(language.nativeName).tag(language)
-                            }
-                        }
-                        .pickerStyle(.inline)
-                        .labelsHidden()
-                    } label: {
-                        Label(store.text(.switchLanguage), systemImage: "globe")
-                    }
-
-                    Divider()
-
-                    Button {
-                        store.shutDown()
-                        NSApplication.shared.terminate(nil)
-                    } label: {
-                        Label(store.text(.quit), systemImage: "power")
-                    }
-                    .keyboardShortcut("q")
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .frame(width: 22, height: 22)
-                        .padding(5)
-                        .background {
-                            if usesFrostedGlass {
-                                Circle()
-                                    .fill(.regularMaterial)
-                                    .overlay {
-                                        Circle()
-                                            .stroke(.white.opacity(0.32), lineWidth: 1)
-                                    }
-                                    .shadow(color: .black.opacity(0.14), radius: 8, y: 4)
-                            }
-                        }
-                }
-                .menuStyle(.borderlessButton)
-                .buttonStyle(.plain)
-                .accessibilityLabel(store.text(.appMenu))
-            }
+            footerView
         }
-        .padding(20)
-        .frame(width: 360)
-        .onAppear {
-            store.refreshStatus()
-        }
+        .padding(.horizontal, 24)
+        .padding(.top, 22)
+        .padding(.bottom, 18)
+        .frame(width: 390)
+        .foregroundStyle(appearance.primaryText)
+        .background { ThemeBackground(appearance: appearance) }
+        .background { ThemeWindowAppearance(appearance: appearance) }
+        .preferredColorScheme(appearance.colorScheme)
+        .environment(\.locale, store.language.locale)
+        .onAppear { store.refreshStatus() }
         .onReceive(refreshTimer) { _ in
             guard NSApp.windows.contains(where: { $0.title == "Mac Stay Awake" && $0.isVisible }) else {
                 return
@@ -153,134 +44,135 @@ struct MenuBarContentView: View {
         }
     }
 
-    private func appearanceButton(_ title: String, appearance option: AppAppearance) -> some View {
-        Button {
-            appearance = option.rawValue
-        } label: {
-            if appearance == option.rawValue {
-                Label(title, systemImage: "checkmark")
-            } else {
-                Text(title)
-            }
-        }
-    }
-
     private var statusView: some View {
-        HStack(spacing: 12) {
-            Image(systemName: store.menuBarIconName)
-                .font(.title2)
-                .foregroundStyle(statusColor)
-                .frame(width: 42, height: 42)
-                .background {
-                    if usesFrostedGlass {
-                        Circle()
-                            .fill(.regularMaterial)
-                            .overlay {
-                                Circle()
-                                    .stroke(.white.opacity(0.38), lineWidth: 1)
-                            }
-                            .shadow(color: .black.opacity(0.14), radius: 10, y: 5)
-                    } else {
-                        Circle()
-                            .fill(.quaternary)
-                    }
-                }
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(store.statusTitle)
-                    .font(.headline)
-                    .foregroundStyle(store.isWarning ? statusColor : Color.primary)
-
-                Text(store.statusDetail)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .stroke(appearance.accent.opacity(0.12), lineWidth: 1)
+                    .frame(width: 90, height: 90)
+                Circle()
+                    .fill(statusColor.opacity(0.08))
+                    .frame(width: 76, height: 76)
+                Image(systemName: store.menuBarIconName)
+                    .font(.system(size: 32, weight: .regular))
+                    .foregroundStyle(statusColor)
+                .frame(width: 64, height: 64)
+                .background { ThemeSurface(appearance: appearance, radius: 24) }
             }
+            .accessibilityHidden(true)
+
+            VStack(spacing: 6) {
+                Text(store.statusTitle)
+                    .font(.system(size: 23, weight: .semibold, design: appearance == .warmSand ? .serif : .rounded))
+                    .foregroundStyle(store.isWarning ? statusColor : appearance.primaryText)
+                Text(store.statusDetail)
+                    .font(.system(size: 12))
+                    .foregroundStyle(appearance.secondaryText)
+            }
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(store.text(.currentStatus))
-        .accessibilityValue(store.statusTitle)
+        .accessibilityValue("\(store.statusTitle). \(store.statusDetail)")
     }
 
     private var systemStatusView: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 14) {
             HStack {
-                Text(store.text(.preventSystemSleep))
-                Spacer()
-                Text(store.protectionStatusTitle)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(statusColor)
+                Label(store.text(.preventSystemSleep), systemImage: "moon.zzz")
+                    .foregroundStyle(appearance.secondaryText)
+                Spacer(minLength: 8)
+                HStack(spacing: 5) {
+                    Circle().fill(statusColor).frame(width: 5, height: 5)
+                    Text(store.protectionStatusTitle)
+                        .fontWeight(.semibold)
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(statusColor)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(statusColor.opacity(0.10), in: Capsule())
             }
 
-            Divider()
+            Rectangle().fill(appearance.border).frame(height: 1)
 
             HStack {
-                Text(store.text(.lastChecked))
-                Spacer()
+                Label(store.text(.lastChecked), systemImage: "clock")
+                    .foregroundStyle(appearance.secondaryText)
+                Spacer(minLength: 8)
                 Text(store.lastCheckedTitle)
-                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .fontWeight(.medium)
             }
         }
-        .font(.callout)
-        .padding(12)
-        .background {
-            let shape = RoundedRectangle(cornerRadius: usesFrostedGlass ? 16 : 10)
-
-            if usesFrostedGlass {
-                shape
-                    .fill(.regularMaterial)
-                    .overlay {
-                        shape
-                            .stroke(.white.opacity(0.34), lineWidth: 1)
-                    }
-                    .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
-            } else {
-                shape
-                    .fill(.quaternary)
-            }
-        }
+        .font(.system(size: 12))
+        .padding(16)
+        .background { ThemeSurface(appearance: appearance) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(store.text(.actualSystemStatus))
         .accessibilityValue("\(store.text(.preventSystemSleep)): \(store.protectionStatusTitle); \(store.text(.lastChecked)): \(store.lastCheckedTitle)")
     }
 
-    private var statusColor: Color {
-        if store.isWarning { return .orange }
-        return store.isAwake ? .green : .secondary
+    private var actionsView: some View {
+        VStack(spacing: 10) {
+            Button {
+                store.toggle()
+            } label: {
+                Label(store.actionTitle, systemImage: store.mode == .unknown ? "arrow.clockwise" : "power")
+            }
+            .buttonStyle(ThemeActionStyle(appearance: appearance, prominent: true))
+            .disabled(store.isChecking)
+            .accessibilityHint(store.text(store.isAwake ? .allowSleepHint : .enableAwakeHint))
+
+            if let secondaryActionTitle = store.secondaryActionTitle {
+                Button(secondaryActionTitle) { store.acceptDetectedStatus() }
+                    .buttonStyle(ThemeActionStyle(appearance: appearance))
+            }
+
+            if store.mode != .unknown {
+                Button { store.refreshStatus() } label: {
+                    Label(store.refreshActionTitle, systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(ThemeActionStyle(appearance: appearance))
+                .disabled(store.isChecking)
+            }
+
+            Text(store.text(.autoCheck))
+                .font(.system(size: 10))
+                .foregroundStyle(appearance.secondaryText)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
+        }
     }
-}
 
-private struct FrostedGlassBackground: View {
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    var body: some View {
-        Group {
-            if reduceTransparency {
-                Color(nsColor: .windowBackgroundColor).opacity(0.94)
-            } else {
-                NativeWindowBlur()
-                    .overlay {
-                        Color(nsColor: .windowBackgroundColor).opacity(0.12)
-                    }
-                    .overlay(alignment: .top) {
-                        Color.white.opacity(0.32)
-                            .frame(height: 1)
-                    }
+    private var footerView: some View {
+        VStack(spacing: 14) {
+            Rectangle().fill(appearance.border).frame(height: 1)
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Mac Stay Awake")
+                        .font(.system(size: 10, weight: .medium))
+                    Text(store.text(appearance.titleKey))
+                        .font(.system(size: 10))
+                        .foregroundStyle(appearance.secondaryText)
+                }
+                Spacer(minLength: 4)
+                appMenu
             }
         }
-        .ignoresSafeArea()
-    }
-}
-
-private struct NativeWindowBlur: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .underWindowBackground
-        view.blendingMode = .behindWindow
-        view.state = .active
-        return view
     }
 
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+    private var appMenu: some View {
+        AppMenuButton(store: store, appearanceValue: $appearanceValue)
+            .frame(width: 38, height: 28)
+            .background { ThemeSurface(appearance: appearance, radius: 9) }
+    }
+
+    private var statusColor: Color {
+        if store.isWarning { return appearance.warning }
+        return store.isAwake ? appearance.success : appearance.secondaryText
+    }
 }

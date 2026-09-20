@@ -85,7 +85,11 @@ enum AppLanguage: String, CaseIterable {
         case .standardAppearance:
             translations = ("默认", "預設", "Default")
         case .frostedGlass:
-            translations = ("磨砂玻璃", "磨砂玻璃", "Frosted Glass")
+            translations = ("极光磨砂", "極光磨砂", "Aurora Glass")
+        case .midnight:
+            translations = ("午夜蓝", "午夜藍", "Midnight Blue")
+        case .warmSand:
+            translations = ("暖砂", "暖砂", "Warm Sand")
         case .appearance:
             translations = ("外观", "外觀", "Appearance")
         case .switchLanguage:
@@ -119,6 +123,6 @@ enum AppText {
     case enabled, disabled, unconfirmed, notChecked, keepAwake, useNormal
     case readStatusFailed, enableFailed, restoreFailed, confirmStatusFailed
     case allowSleepHint, enableAwakeHint, autoCheck
-    case standardAppearance, frostedGlass, appearance, switchLanguage, quit, appMenu
+    case standardAppearance, frostedGlass, midnight, warmSand, appearance, switchLanguage, quit, appMenu
     case currentStatus, preventSystemSleep, lastChecked, actualSystemStatus
 }

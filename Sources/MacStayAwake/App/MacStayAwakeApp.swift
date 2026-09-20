@@ -66,12 +66,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showControlWindow() {
         if controlWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 360, height: 420),
-                styleMask: [.titled, .closable, .miniaturizable],
+                contentRect: NSRect(x: 0, y: 0, width: 390, height: 530),
+                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
             window.title = "Mac Stay Awake"
+            window.titlebarAppearsTransparent = true
             window.isReleasedWhenClosed = false
             window.isOpaque = false
             window.backgroundColor = .clear
