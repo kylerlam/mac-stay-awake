@@ -1,3 +1,11 @@
+# Windows edition — v1.3.0
+
+[Download Windows 1.3.0](https://github.com/kylerlam/mac-stay-awake/releases/tag/windows-v1.3.0) · [Windows documentation](Windows/README.md) · [繁體中文指南](Windows/USER-GUIDE.zh-Hant.md)
+
+This is the Windows development branch. macOS remains on main.
+
+---
+
 # Mac Stay Awake
 
 A lightweight native macOS app that disables system sleep while long-running background tasks need to stay online. It stays available from both the Dock and the menu bar.
