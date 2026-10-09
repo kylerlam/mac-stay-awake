@@ -1,0 +1,23 @@
+name: Windows build and tests
+
+on:
+  push:
+    branches: [main, windows]
+  pull_request:
+    branches: [main, windows]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build, test and package Windows 1.3.0
+        shell: powershell
+        run: ./Windows/package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WindowsStayAwake-v1.3.0-win-x64
+          path: |
+            dist/windows/1.3.0/*.exe
+            dist/windows/1.3.0/*.zip
+            dist/windows/1.3.0/SHA256SUMS.txt

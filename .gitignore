@@ -7,3 +7,7 @@ DerivedData/
 .DS_Store
 *.swp
 *.xcuserstate
+
+# Windows build outputs
+Windows/bin/
+Windows/obj/
