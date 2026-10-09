@@ -1,9 +1,11 @@
 name: Windows build and tests
+
 on:
   push:
-    branches: [windows]
+    branches: [main, windows]
   pull_request:
-    branches: [windows]
+    branches: [main, windows]
+
 jobs:
   windows:
     runs-on: windows-latest
