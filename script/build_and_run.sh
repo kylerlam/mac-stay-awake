@@ -64,6 +64,7 @@ PLIST
 
 # Seal the complete bundle for local integrity checks. This is an ad-hoc
 # signature, not a Developer ID signature or Apple notarization.
+xattr -d com.apple.FinderInfo "$APP_BUNDLE" 2>/dev/null || true
 codesign --force --deep --sign - "$APP_BUNDLE"
 
 open_app() {
