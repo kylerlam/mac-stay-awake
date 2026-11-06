@@ -1,8 +1,16 @@
 # Mac Stay Awake
 
+Native editions for macOS and Windows live in this repository. The Swift package builds the macOS app, and `Windows/` contains the Windows app and its platform-specific documentation.
+
+[Download for macOS](https://github.com/kylerlam/mac-stay-awake/releases/latest) · [Download Windows 1.3.0](https://github.com/kylerlam/mac-stay-awake/releases/tag/windows-v1.3.0) · [Windows documentation](Windows/README.md) · [繁體中文指南](Windows/USER-GUIDE.zh-Hant.md)
+
+---
+
+## macOS edition
+
 A lightweight native macOS app that disables system sleep while long-running background tasks need to stay online. It stays available from both the Dock and the menu bar.
 
-**[Download for macOS](https://github.com/kylerlam/mac-stay-awake/releases/latest)** · macOS 14 or later
+macOS 14 or later
 
 ## Appearance
 
