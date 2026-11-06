@@ -12,27 +12,27 @@ final class AwakeStoreTests: XCTestCase {
         return defaults
     }
 
-    private func makeStore(service: FakeAwakeService) -> AwakeStore {
-        AwakeStore(service: service, defaults: makeDefaults())
+    private func makeStore(service: FakeAwakeService, displayService: FakeAwakeService = FakeAwakeService()) -> AwakeStore {
+        AwakeStore(service: service, displayService: displayService, defaults: makeDefaults())
     }
 
     func testLanguageDefaultsToSimplifiedChineseAndPersistsSelection() {
         let defaults = makeDefaults()
-        let store = AwakeStore(service: FakeAwakeService(), defaults: defaults)
+        let store = AwakeStore(service: FakeAwakeService(), displayService: FakeAwakeService(), defaults: defaults)
         XCTAssertEqual(store.language, .simplifiedChinese)
 
         store.language = .traditionalChinese
-        let reopenedStore = AwakeStore(service: FakeAwakeService(), defaults: defaults)
+        let reopenedStore = AwakeStore(service: FakeAwakeService(), displayService: FakeAwakeService(), defaults: defaults)
         XCTAssertEqual(reopenedStore.language, .traditionalChinese)
         XCTAssertEqual(reopenedStore.actionTitle, "開啟闔蓋運行")
 
         reopenedStore.language = .english
-        let nextStore = AwakeStore(service: FakeAwakeService(), defaults: defaults)
+        let nextStore = AwakeStore(service: FakeAwakeService(), displayService: FakeAwakeService(), defaults: defaults)
         XCTAssertEqual(nextStore.language, .english)
         XCTAssertEqual(nextStore.statusTitle, "Normal Mode")
 
         defaults.set("unsupported", forKey: "appLanguage")
-        XCTAssertEqual(AwakeStore(service: FakeAwakeService(), defaults: defaults).language, .simplifiedChinese)
+        XCTAssertEqual(AwakeStore(service: FakeAwakeService(), displayService: FakeAwakeService(), defaults: defaults).language, .simplifiedChinese)
     }
 
     func testLanguageChangeUpdatesExistingErrorWithoutCallingService() {
@@ -112,33 +112,47 @@ final class AwakeStoreTests: XCTestCase {
     func testRefreshUsesSystemStatusAsSourceOfTruth() {
         let service = FakeAwakeService()
         service.systemStatus = true
-        let store = makeStore(service: service)
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
 
         store.refreshStatus()
 
         XCTAssertEqual(store.mode, .awake)
         XCTAssertEqual(service.statusCallCount, 1)
+        XCTAssertEqual(service.activateCallCount, 0)
+        XCTAssertEqual(displayService.activateCallCount, 1)
+        XCTAssertEqual(displayService.statusCallCount, 1)
+        XCTAssertTrue(store.isAutoLockPrevented)
+        XCTAssertFalse(store.isWarning)
         XCTAssertNotNil(store.lastCheckedAt)
     }
 
     func testToggleActivatesAndVerifiesThenDeactivatesAndVerifies() {
         let service = FakeAwakeService()
-        let store = makeStore(service: service)
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
 
         store.toggle()
         XCTAssertEqual(store.mode, .awake)
         XCTAssertEqual(service.activateCallCount, 1)
         XCTAssertEqual(service.statusCallCount, 1)
+        XCTAssertTrue(store.isAutoLockPrevented)
+        XCTAssertEqual(displayService.activateCallCount, 1)
+        XCTAssertEqual(displayService.statusCallCount, 1)
 
         store.toggle()
         XCTAssertEqual(store.mode, .normal)
         XCTAssertEqual(service.deactivateCallCount, 1)
         XCTAssertEqual(service.statusCallCount, 2)
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertEqual(displayService.deactivateCallCount, 1)
+        XCTAssertEqual(displayService.statusCallCount, 2)
     }
 
     func testRefreshShowsMismatchWhenPreviouslyAwakeButSystemIsDisabled() {
         let service = FakeAwakeService()
-        let store = makeStore(service: service)
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
         store.toggle()
         service.systemStatus = false
 
@@ -147,6 +161,9 @@ final class AwakeStoreTests: XCTestCase {
         XCTAssertEqual(store.mode, .mismatch(expectedAwake: true, actualAwake: false))
         XCTAssertEqual(store.statusTitle, "合盖运行未生效")
         XCTAssertEqual(store.secondaryActionTitle, "使用正常模式")
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertFalse(displayService.isActive)
+        XCTAssertEqual(displayService.deactivateCallCount, 1)
     }
 
     func testAcceptDetectedStatusClearsMismatchToNormalMode() {
@@ -200,7 +217,8 @@ final class AwakeStoreTests: XCTestCase {
 
     func testFailedDeactivationShowsMismatchWhenSystemRemainsEnabled() {
         let service = FakeAwakeService()
-        let store = makeStore(service: service)
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
         store.toggle()
         service.deactivationError = AwakeServiceError.commandFailed(-1)
 
@@ -209,11 +227,15 @@ final class AwakeStoreTests: XCTestCase {
         XCTAssertEqual(store.mode, .mismatch(expectedAwake: false, actualAwake: true))
         XCTAssertEqual(store.errorMessage, "无法恢复正常模式，请重试。")
         XCTAssertEqual(store.secondaryActionTitle, "保持合盖运行")
+        XCTAssertTrue(store.isAutoLockPrevented)
+        XCTAssertTrue(displayService.isActive)
+        XCTAssertEqual(displayService.deactivateCallCount, 0)
     }
 
     func testShutdownReleasesSettingEnabledByThisSession() {
         let service = FakeAwakeService()
-        let store = makeStore(service: service)
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
         store.toggle()
 
         store.shutDown()
@@ -222,6 +244,149 @@ final class AwakeStoreTests: XCTestCase {
         XCTAssertFalse(service.systemStatus)
         XCTAssertEqual(service.deactivateCallCount, 1)
         XCTAssertEqual(store.mode, .normal)
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertFalse(displayService.isActive)
+        XCTAssertEqual(displayService.deactivateCallCount, 1)
+    }
+
+    func testShutdownReleasesDisplayWithoutChangingInheritedSleepPrevention() {
+        let service = FakeAwakeService()
+        service.systemStatus = true
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
+        store.refreshStatus()
+
+        store.shutDown()
+
+        XCTAssertTrue(service.systemStatus)
+        XCTAssertEqual(service.activateCallCount, 0)
+        XCTAssertEqual(service.deactivateCallCount, 0)
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertFalse(displayService.isActive)
+        XCTAssertEqual(displayService.deactivateCallCount, 1)
+    }
+
+    func testDisplayActivationFailureShowsWarningAndRefreshCanRecover() {
+        let service = FakeAwakeService()
+        let displayService = FakeAwakeService()
+        displayService.activationError = AwakeServiceError.commandFailed(-1)
+        let store = makeStore(service: service, displayService: displayService)
+
+        store.toggle()
+
+        XCTAssertEqual(store.mode, .awake)
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertTrue(store.isWarning)
+        XCTAssertEqual(store.errorMessage, "无法确认防自动锁屏状态，请重新检测。")
+
+        displayService.activationError = nil
+        store.refreshStatus()
+
+        XCTAssertTrue(store.isAutoLockPrevented)
+        XCTAssertFalse(store.isWarning)
+        XCTAssertNil(store.errorMessage)
+        XCTAssertEqual(service.activateCallCount, 1)
+    }
+
+    func testDisplayActivationRequiresVerifiedStatus() {
+        let displayService = FakeAwakeService()
+        displayService.activationApplies = false
+        let store = makeStore(service: FakeAwakeService(), displayService: displayService)
+
+        store.toggle()
+
+        XCTAssertEqual(store.mode, .awake)
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertTrue(store.isWarning)
+        XCTAssertNotNil(store.errorMessage)
+        XCTAssertEqual(displayService.statusCallCount, 1)
+    }
+
+    func testDisplayStatusReadFailureShowsWarning() {
+        let displayService = FakeAwakeService()
+        displayService.statusError = AwakeServiceError.statusUnavailable
+        let store = makeStore(service: FakeAwakeService(), displayService: displayService)
+
+        store.toggle()
+
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertTrue(store.isWarning)
+        XCTAssertNotNil(store.errorMessage)
+    }
+
+    func testSleepStatusReadFailureStillRefreshesDisplayStatus() {
+        let service = FakeAwakeService()
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: service, displayService: displayService)
+        store.toggle()
+        displayService.systemStatus = false
+        service.statusError = AwakeServiceError.statusUnavailable
+
+        store.refreshStatus()
+
+        XCTAssertEqual(store.mode, .unknown)
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertTrue(store.isWarning)
+    }
+
+    func testDisplayDeactivationFailureKeepsVerifiedOnStateAndWarns() {
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: FakeAwakeService(), displayService: displayService)
+        store.toggle()
+        displayService.deactivationError = AwakeServiceError.commandFailed(-1)
+
+        store.toggle()
+
+        XCTAssertEqual(store.mode, .normal)
+        XCTAssertTrue(store.isAutoLockPrevented)
+        XCTAssertTrue(displayService.isActive)
+        XCTAssertTrue(store.isWarning)
+        XCTAssertEqual(store.errorMessage, "无法确认防自动锁屏状态，请重新检测。")
+
+        displayService.deactivationError = nil
+        store.refreshStatus()
+
+        XCTAssertFalse(store.isAutoLockPrevented)
+        XCTAssertFalse(store.isWarning)
+        XCTAssertNil(store.errorMessage)
+    }
+
+    func testDisplayDeactivationRequiresVerifiedStatus() {
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: FakeAwakeService(), displayService: displayService)
+        store.toggle()
+        displayService.deactivationApplies = false
+
+        store.toggle()
+
+        XCTAssertEqual(store.mode, .normal)
+        XCTAssertTrue(store.isAutoLockPrevented)
+        XCTAssertTrue(store.isWarning)
+        XCTAssertNotNil(store.errorMessage)
+    }
+
+    func testAutoLockStatusAndFailureUseSelectedLanguage() {
+        let displayService = FakeAwakeService()
+        let store = makeStore(service: FakeAwakeService(), displayService: displayService)
+        store.refreshStatus()
+
+        for (language, off, on, error) in [
+            (AppLanguage.simplifiedChinese, "未开启", "已开启", "无法确认防自动锁屏状态，请重新检测。"),
+            (.traditionalChinese, "未開啟", "已開啟", "無法確認防自動鎖屏狀態，請重新檢查。"),
+            (.english, "Off", "On", "Could not confirm automatic screen lock prevention. Please check again.")
+        ] {
+            store.language = language
+            XCTAssertEqual(store.autoLockStatusTitle, off)
+            store.toggle()
+            XCTAssertEqual(store.autoLockStatusTitle, on)
+            store.toggle()
+            displayService.activationError = AwakeServiceError.commandFailed(-1)
+            store.toggle()
+            XCTAssertEqual(store.autoLockStatusTitle, off)
+            XCTAssertEqual(store.errorMessage, error)
+            displayService.activationError = nil
+            store.toggle()
+        }
     }
 }
 
@@ -231,6 +396,8 @@ private final class FakeAwakeService: AwakeService {
     var statusError: Error?
     var activationError: Error?
     var deactivationError: Error?
+    var activationApplies = true
+    var deactivationApplies = true
     var statusCallCount = 0
     var activateCallCount = 0
     var deactivateCallCount = 0
@@ -248,6 +415,7 @@ private final class FakeAwakeService: AwakeService {
         if let activationError {
             throw activationError
         }
+        guard activationApplies else { return }
         isActive = true
         systemStatus = true
     }
@@ -257,6 +425,7 @@ private final class FakeAwakeService: AwakeService {
         if let deactivationError {
             throw deactivationError
         }
+        guard deactivationApplies else { return }
         isActive = false
         systemStatus = false
     }

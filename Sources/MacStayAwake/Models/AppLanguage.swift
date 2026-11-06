@@ -37,7 +37,7 @@ enum AppLanguage: String, CaseIterable {
         case .normalDetail:
             translations = ("Mac 会遵循系统休眠设置", "Mac 會遵循系統睡眠設定", "Mac follows system sleep settings")
         case .awakeDetail:
-            translations = ("系统实际状态已确认", "系統實際狀態已確認", "System status confirmed")
+            translations = ("防休眠与防自动锁屏已开启", "防睡眠與防自動鎖屏已開啟", "Sleep and automatic screen lock prevented")
         case .stillPreventingSleep:
             translations = ("系统仍在阻止休眠", "系統仍在阻止睡眠", "The system is still preventing sleep")
         case .sleepAllowed:
@@ -76,10 +76,12 @@ enum AppLanguage: String, CaseIterable {
             translations = ("无法恢复正常模式，请重试。", "無法恢復正常模式，請重試。", "Could not restore normal mode. Please try again.")
         case .confirmStatusFailed:
             translations = ("无法确认系统状态，请重新检测。", "無法確認系統狀態，請重新檢查。", "Could not confirm the system status. Please check again.")
+        case .autoLockFailed:
+            translations = ("无法确认防自动锁屏状态，请重新检测。", "無法確認防自動鎖屏狀態，請重新檢查。", "Could not confirm automatic screen lock prevention. Please check again.")
         case .allowSleepHint:
             translations = ("允许 Mac 按系统设置休眠", "允許 Mac 按系統設定睡眠", "Allow Mac to sleep according to system settings")
         case .enableAwakeHint:
-            translations = ("开启合盖运行模式", "開啟闔蓋運行模式", "Enable closed-lid mode")
+            translations = ("开启合盖运行并防止自动锁屏", "開啟闔蓋運行並防止自動鎖屏", "Enable closed-lid mode and prevent automatic screen lock")
         case .autoCheck:
             translations = ("每 5 秒自动检测 · 仅窗口打开时", "每 5 秒自動檢查 · 僅視窗開啟時", "Checks every 5 seconds · While this window is open")
         case .standardAppearance:
@@ -102,6 +104,8 @@ enum AppLanguage: String, CaseIterable {
             translations = ("当前状态", "目前狀態", "Current Status")
         case .preventSystemSleep:
             translations = ("防止系统休眠", "防止系統睡眠", "Prevent System Sleep")
+        case .preventAutoLock:
+            translations = ("防止自动锁屏", "防止自動鎖屏", "Prevent Automatic Lock")
         case .lastChecked:
             translations = ("最后检测", "上次檢查", "Last Checked")
         case .actualSystemStatus:
@@ -121,8 +125,8 @@ enum AppText {
     case normalDetail, awakeDetail, stillPreventingSleep, sleepAllowed, unknownDetail
     case enableAwake, restoreNormal, retryAwake, retryNormal, refresh, checking
     case enabled, disabled, unconfirmed, notChecked, keepAwake, useNormal
-    case readStatusFailed, enableFailed, restoreFailed, confirmStatusFailed
+    case readStatusFailed, enableFailed, restoreFailed, confirmStatusFailed, autoLockFailed
     case allowSleepHint, enableAwakeHint, autoCheck
     case standardAppearance, frostedGlass, midnight, warmSand, appearance, switchLanguage, quit, appMenu
-    case currentStatus, preventSystemSleep, lastChecked, actualSystemStatus
+    case currentStatus, preventSystemSleep, preventAutoLock, lastChecked, actualSystemStatus
 }

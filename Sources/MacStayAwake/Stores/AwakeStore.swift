@@ -7,15 +7,19 @@ final class AwakeStore: ObservableObject {
     @Published private var errorMessageKey: AppText?
     @Published private(set) var isChecking = false
     @Published private(set) var lastCheckedAt: Date?
+    @Published private var autoLockStatus: Bool?
+    @Published private var autoLockPreventionFailed = false
     @Published var language: AppLanguage {
         didSet { defaults.set(language.rawValue, forKey: "appLanguage") }
     }
 
     private let service: AwakeService
+    private let displayService: AwakeService
     private let defaults: UserDefaults
 
-    init(service: AwakeService, defaults: UserDefaults = .standard) {
+    init(service: AwakeService, displayService: AwakeService = DisplayAwakeService(), defaults: UserDefaults = .standard) {
         self.service = service
+        self.displayService = displayService
         self.defaults = defaults
         self.language = defaults.string(forKey: "appLanguage")
             .flatMap(AppLanguage.init(rawValue:)) ?? .simplifiedChinese
@@ -34,6 +38,7 @@ final class AwakeStore: ObservableObject {
     }
 
     var isWarning: Bool {
+        if autoLockPreventionFailed { return true }
         switch mode {
         case .mismatch, .unknown:
             return true
@@ -60,7 +65,7 @@ final class AwakeStore: ObservableObject {
         case .normal:
             return text(.normalDetail)
         case .awake:
-            return text(.awakeDetail)
+            return text(isAutoLockPrevented ? .awakeDetail : .stillPreventingSleep)
         case .mismatch(_, let actualAwake):
             return text(actualAwake ? .stillPreventingSleep : .sleepAllowed)
         case .unknown:
@@ -107,6 +112,15 @@ final class AwakeStore: ObservableObject {
         case .unknown:
             return text(.unconfirmed)
         }
+    }
+
+    var isAutoLockPrevented: Bool {
+        autoLockStatus == true
+    }
+
+    var autoLockStatusTitle: String {
+        guard let autoLockStatus else { return text(.unconfirmed) }
+        return text(autoLockStatus ? .enabled : .disabled)
     }
 
     var lastCheckedTitle: String {
@@ -165,8 +179,10 @@ final class AwakeStore: ObservableObject {
             default:
                 mode = actualAwake ? .awake : .normal
             }
+            synchronizeAutoLockPrevention(systemAwake: actualAwake)
         } catch {
             mode = .unknown
+            autoLockStatus = try? displayService.currentStatus()
             errorMessageKey = .readStatusFailed
         }
     }
@@ -175,9 +191,12 @@ final class AwakeStore: ObservableObject {
         guard case .mismatch(_, let actualAwake) = mode else { return }
         mode = actualAwake ? .awake : .normal
         errorMessageKey = nil
+        synchronizeAutoLockPrevention(systemAwake: actualAwake)
     }
 
     func shutDown() {
+        try? displayService.deactivate()
+        autoLockStatus = try? displayService.currentStatus()
         guard service.isActive else { return }
 
         do {
@@ -207,6 +226,7 @@ final class AwakeStore: ObservableObject {
             mode = actualAwake == expectedAwake
                 ? (actualAwake ? .awake : .normal)
                 : .mismatch(expectedAwake: expectedAwake, actualAwake: actualAwake)
+            synchronizeAutoLockPrevention(systemAwake: actualAwake)
         } catch {
             reconcileAfterFailure(expectedAwake: expectedAwake)
         }
@@ -223,9 +243,30 @@ final class AwakeStore: ObservableObject {
                 mode = .mismatch(expectedAwake: expectedAwake, actualAwake: actualAwake)
                 errorMessageKey = expectedAwake ? .enableFailed : .restoreFailed
             }
+            synchronizeAutoLockPrevention(systemAwake: actualAwake)
         } catch {
             mode = .unknown
+            autoLockStatus = try? displayService.currentStatus()
             errorMessageKey = .confirmStatusFailed
         }
+    }
+
+    private func synchronizeAutoLockPrevention(systemAwake: Bool) {
+        autoLockPreventionFailed = false
+
+        do {
+            if systemAwake {
+                try displayService.activate()
+            } else {
+                try displayService.deactivate()
+            }
+
+            autoLockStatus = try displayService.currentStatus()
+            autoLockPreventionFailed = autoLockStatus != systemAwake
+        } catch {
+            autoLockStatus = try? displayService.currentStatus()
+            autoLockPreventionFailed = true
+        }
+        if autoLockPreventionFailed && errorMessageKey == nil { errorMessageKey = .autoLockFailed }
     }
 }

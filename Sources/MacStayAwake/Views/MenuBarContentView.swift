@@ -113,6 +113,17 @@ struct MenuBarContentView: View {
             Rectangle().fill(appearance.border).frame(height: 1)
 
             HStack {
+                Label(store.text(.preventAutoLock), systemImage: "lock.open")
+                    .foregroundStyle(appearance.secondaryText)
+                Spacer(minLength: 8)
+                Text(store.autoLockStatusTitle)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(statusColor)
+            }
+
+            Rectangle().fill(appearance.border).frame(height: 1)
+
+            HStack {
                 Label(store.text(.lastChecked), systemImage: "clock")
                     .foregroundStyle(appearance.secondaryText)
                 Spacer(minLength: 8)
@@ -126,7 +137,7 @@ struct MenuBarContentView: View {
         .background { ThemeSurface(appearance: appearance) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(store.text(.actualSystemStatus))
-        .accessibilityValue("\(store.text(.preventSystemSleep)): \(store.protectionStatusTitle); \(store.text(.lastChecked)): \(store.lastCheckedTitle)")
+        .accessibilityValue("\(store.text(.preventSystemSleep)): \(store.protectionStatusTitle); \(store.text(.preventAutoLock)): \(store.autoLockStatusTitle); \(store.text(.lastChecked)): \(store.lastCheckedTitle)")
     }
 
     private var actionsView: some View {

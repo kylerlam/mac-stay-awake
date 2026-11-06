@@ -19,6 +19,7 @@ Four appearances in a compact 360 × 420 window. Open the menu in the bottom-rig
 ## Features
 
 - Enable lid-closed operation with one click using macOS `pmset`.
+- Prevent idle screen savers, display sleep, and automatic screen locking while closed-lid mode is enabled and the app is running.
 - Restore normal sleep behavior at any time.
 - Keep controls available in a standard, minimizable window and the menu bar.
 - Show the verified system sleep-prevention status in the app without exposing command-line terminology.
@@ -48,12 +49,15 @@ The script builds the Swift package, creates `dist/MacStayAwake.app`, and launch
 ## Usage
 
 1. Click the cup icon in the menu bar.
-2. Click **开启合盖运行** to prevent system sleep.
-3. Click **恢复正常模式** when the background task is complete.
+2. Click **开启合盖运行** to prevent system sleep and automatic screen locking during your task.
+3. Check that both **防止系统休眠** and **防止自动锁屏** show **已开启**.
+4. Click **恢复正常模式** when the task is complete.
 
 The status card reads the current macOS value after every change. Green means the system value was verified, gray means normal sleep behavior is enabled, and orange means the requested and detected states do not match or the status could not be read.
 
 Changing the mode requires administrator approval. The app verifies the system value before showing success and restores normal sleep behavior when you click **恢复正常模式**.
+
+While sleep prevention is enabled, the app also holds a macOS display-awake assertion to stop idle screen savers and display sleep from triggering automatic screen locking. It reads back the assertion before showing protection as enabled, including when sleep prevention was already on at launch. This does not change your screen saver preferences or password requirement. Manual locking remains available. Restoring normal mode or quitting releases the display protection; keep the app running throughout UI-based Shortcuts tasks. The existing `pmset` backend still handles lid-closed operation; keeping the display awake does not make a closed built-in display available for UI automation.
 
 ## Check system status
 
